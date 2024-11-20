@@ -1,0 +1,8 @@
+[paths]
+source =
+    testpad
+
+[run]
+branch = true
+parallel = true
+source = testpad
