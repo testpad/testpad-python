@@ -3,7 +3,7 @@ build-backend = "poetry.core.masonry.api"
 requires = [ "poetry-core" ]
 
 [tool.poetry]
-name = "testpad"
+name = "testpad-python"
 version = "0.1.0"
 description = "Python API client for the TestPad service"
 authors = [ "Testpad <code@testpad.com>" ]
@@ -13,6 +13,18 @@ packages = [
   { include = "testpad" },
 ]
 exclude = [ "**/tests/**", "**/testutils.py", "**/tests.py" ]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Quality Assurance",
+  "Operating System :: OS Independent",
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -23,3 +35,4 @@ pytest = "^8.3"
 pytest-cov = "^6.0"
 pre-commit = "^4.0"
 twine = "^4.0"
+prospector = "^1.13.3"
