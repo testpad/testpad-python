@@ -1,13 +1,13 @@
 import sys
 from http import HTTPStatus
 from importlib.metadata import version
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import urljoin
 
 from requests import Response, Session
 
 from . import models
-from .exceptions import NotFound, UnexpectedResponse
+from .exceptions import ActionNotAllowed, BadRequest, NotFound, UnexpectedResponse
 
 VERSION = str(version("testpad"))
 _python_version = ".".join(str(v) for v in sys.version_info[:2])
@@ -80,8 +80,15 @@ class Testpad:
         if resp.status_code in accepted_responses:
             return resp
 
+        if resp.status_code in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
+            raise ActionNotAllowed(resp)
+
+        if resp.status_code == HTTPStatus.BAD_REQUEST:
+            raise BadRequest(resp)
+
         if resp.status_code == HTTPStatus.NOT_FOUND:
             raise NotFound(resp)
+
         raise UnexpectedResponse(resp)
 
     def _get(self, path: str, params: dict[str, str] = None) -> Response:
@@ -94,7 +101,7 @@ class Testpad:
         return self._request("POST", path, HTTPStatus.OK, data=data)
 
     def _delete(self, path: str) -> Response:
-        return self._request("DELETE", path, HTTPStatus.OK)
+        return self._request("DELETE", path, HTTPStatus.NO_CONTENT)
 
     # ---
     # Utilities
@@ -118,12 +125,36 @@ class Testpad:
         data = self._get("projects").json()
         return [models.Project(**proj) for proj in data["projects"]]
 
+    def get_project_folders(self, project_id: str) -> models.Folder:
+        """
+        Note: this actually lists all contents, including folders, scripts and notes
+
+        :param project_id:
+            The project to get the contents of
+        :return:
+            The root folder of the project, and all of its contents
+        """
+        data = self._get(f"projects/{project_id}/folders").json()
+        return models.parse_data(data["folders"])
+
+    # ---
+    # Project notes
+    # ---
+
     def list_project_notes(self, project_id: str) -> List[models.Note]:
         data = self._get(f"projects/{project_id}/notes").json()
         return [models.Note(**note) for note in data["notes"]]
 
     def add_project_note(self, project_id: str, name: str) -> models.Note:
         data = self._put(f"projects/{project_id}/notes", {"name": name}).json()
+        return models.Note(**data)
+
+    def update_project_note(
+        self, project_id: str, note_id: str, name: str
+    ) -> models.Note:
+        data = self._post(
+            f"projects/{project_id}/notes/{note_id}", {"name": name}
+        ).json()
         return models.Note(**data)
 
     def delete_project_note(self, project_id: str, note_id: str):
@@ -133,6 +164,51 @@ class Testpad:
     # Folders
     # ---
 
+    def get_folder(self, project_id: str, folder_id: str) -> models.Folder:
+        data = self._get(f"projects/{project_id}/folders/{folder_id}").json()
+        return models.parse_data(data["folder"])
+
+    def rename_folder(
+        self, project_id: str, folder_id: str, name: str
+    ) -> models.Folder:
+        resp = self._post(
+            f"projects/{project_id}/folders/{folder_id}",
+            {"name": name},
+        )
+
+        data = resp.json()
+        return models.parse_data(data["folder"])
+
+    def create_folder(
+        self,
+        project_id: str,
+        name: str,
+        in_folder: str = None,
+        insert: Union[int, str] = 0,
+    ) -> models.Folder:
+        """
+
+        :param project_id:
+            required: The project in which to create this folder
+        :param name:
+            required: The name of the folder
+        :param in_folder:
+            optional: The parent folder for the new folder, or if none, will be placed in the root of the project
+        :param insert:
+            optional Where to place this folder - can be a numerical index, or one of 'first', 'last'
+        :return:
+        """
+        endpoint = f"projects/{project_id}/folders"
+        if in_folder is not None:
+            endpoint = f"{endpoint}/{in_folder}/folders"
+        data = self._put(endpoint, data={"name": name, "insert": insert}).json()
+        return models.parse_data(data["folder"])
+
     # ---
     # Scripts
     # ---
+
+    def create_script(
+        self, project_id: str, name: str, in_folder: str = None
+    ) -> models.Script:
+        pass
