@@ -19,8 +19,7 @@ class ApiKey:
 
 @dataclass(frozen=True)
 class Project:
-    id: str
-    number: int
+    id: int
     name: str
     description: str
     created: datetime
@@ -37,9 +36,10 @@ class Note:
 class Script:
     type: str  # will always be 'script'
     id: str
-    number: int
     name: str
     created: datetime
+    fields: str
+    description: str = None
 
 
 @dataclass(frozen=True)
@@ -50,13 +50,21 @@ class Folder:
     contents: list[Union[Self, Script, Note]]
 
 
-def parse_data(data: Dict[str, Any]) -> Union[Folder, Script, Note]:
+@dataclass(frozen=True)
+class Test:
+    id: int
+    text: str
+    indent: int
+    script_id: int
+
+
+def parse_folder_contents(data: Dict[str, Any]) -> Union[Folder, Script, Note]:
     if data["type"] == "script":
         return Script(**data)
     elif data["type"] == "note":
         return Note(**data)
     elif data["type"] == "folder":
         # first coerce the contents list into correct types
-        data["contents"] = [parse_data(cont) for cont in data["contents"]]
+        data["contents"] = [parse_folder_contents(cont) for cont in data["contents"]]
         return Folder(**data)
     raise ValueError(f"Unexpected type: {data['type']}")

@@ -117,7 +117,7 @@ class Testpad:
     # Projects
     # ---
 
-    def get_project(self, project_id: str) -> models.Project:
+    def get_project(self, project_id: int) -> models.Project:
         data = self._get(f"projects/{project_id}").json()
         return models.Project(**data)
 
@@ -125,7 +125,7 @@ class Testpad:
         data = self._get("projects").json()
         return [models.Project(**proj) for proj in data["projects"]]
 
-    def get_project_folders(self, project_id: str) -> models.Folder:
+    def get_project_folders(self, project_id: int) -> models.Folder:
         """
         Note: this actually lists all contents, including folders, scripts and notes
 
@@ -135,41 +135,41 @@ class Testpad:
             The root folder of the project, and all of its contents
         """
         data = self._get(f"projects/{project_id}/folders").json()
-        return models.parse_data(data["folders"])
+        return models.parse_folder_contents(data["folders"])
 
     # ---
     # Project notes
     # ---
 
-    def list_project_notes(self, project_id: str) -> List[models.Note]:
+    def list_project_notes(self, project_id: int) -> List[models.Note]:
         data = self._get(f"projects/{project_id}/notes").json()
         return [models.Note(**note) for note in data["notes"]]
 
-    def add_project_note(self, project_id: str, name: str) -> models.Note:
+    def add_project_note(self, project_id: int, name: str) -> models.Note:
         data = self._put(f"projects/{project_id}/notes", {"name": name}).json()
         return models.Note(**data)
 
     def update_project_note(
-        self, project_id: str, note_id: str, name: str
+        self, project_id: int, note_id: str, name: str
     ) -> models.Note:
         data = self._post(
             f"projects/{project_id}/notes/{note_id}", {"name": name}
         ).json()
         return models.Note(**data)
 
-    def delete_project_note(self, project_id: str, note_id: str):
+    def delete_project_note(self, project_id: int, note_id: str):
         self._delete(f"projects/{project_id}/notes/{note_id}")
 
     # ---
     # Folders
     # ---
 
-    def get_folder(self, project_id: str, folder_id: str) -> models.Folder:
+    def get_folder(self, project_id: int, folder_id: str) -> models.Folder:
         data = self._get(f"projects/{project_id}/folders/{folder_id}").json()
-        return models.parse_data(data["folder"])
+        return models.parse_folder_contents(data["folder"])
 
     def rename_folder(
-        self, project_id: str, folder_id: str, name: str
+        self, project_id: int, folder_id: str, name: str
     ) -> models.Folder:
         resp = self._post(
             f"projects/{project_id}/folders/{folder_id}",
@@ -177,11 +177,11 @@ class Testpad:
         )
 
         data = resp.json()
-        return models.parse_data(data["folder"])
+        return models.parse_folder_contents(data["folder"])
 
     def create_folder(
         self,
-        project_id: str,
+        project_id: int,
         name: str,
         in_folder: str = None,
         insert: Union[int, str] = 0,
@@ -202,13 +202,49 @@ class Testpad:
         if in_folder is not None:
             endpoint = f"{endpoint}/{in_folder}/folders"
         data = self._put(endpoint, data={"name": name, "insert": insert}).json()
-        return models.parse_data(data["folder"])
+        return models.parse_folder_contents(data["folder"])
 
     # ---
     # Scripts
     # ---
 
     def create_script(
-        self, project_id: str, name: str, in_folder: str = None
+        self, project_id: int, name: str, in_folder: str = None
     ) -> models.Script:
-        pass
+        if in_folder is None:
+            endpoint = f"projects/{project_id}/scripts"
+        else:
+            endpoint = f"projects/{project_id}/folders/{in_folder}/scripts"
+
+        data = self._put(endpoint, {"name": name}).json()
+        return models.parse_folder_contents(data["script"])
+
+    # ---
+    # Tests
+    # ---
+
+    def create_test(
+        self, script_id: int, test_text: str, indent: int = 0
+    ) -> models.Test:
+        data = self._put(
+            f"scripts/{script_id}/tests", data={"text": test_text, "indent": indent}
+        ).json()
+        return models.Test(**data["test"])
+
+    def get_test(self, script_id: int, test_id: int) -> models.Test:
+        data = self._get(f"scripts/{script_id}/tests/{test_id}").json()
+        return models.Test(**data["test"])
+
+    def update_test(
+        self, script_id: int, test_id: int, test_text: str = None, indent: int = None
+    ) -> models.Test:
+        new_data = {"text": test_text, "indent": indent}
+        data = self._post(f"scripts/{script_id}/tests/{test_id}", data=new_data).json()
+        return models.Test(**data["test"])
+
+    def list_tests(self, script_id: int) -> List[models.Test]:
+        data = self._get(f"scripts/{script_id}/tests").json()
+        return [models.Test(**test) for test in data["tests"]]
+
+    def delete_test(self, script_id: int, test_id: int):
+        self._delete(f"scripts/{script_id}/tests/{test_id}")
