@@ -14,15 +14,15 @@ repos:
       - id: debug-statements
       # validate syntax of some file types
       - id: check-yaml
-      - id: check-json
       - id: check-toml
       # prevent large files being added
       - id: check-added-large-files
+
+  # Code formatting and linting
   - repo: https://github.com/tox-dev/pyproject-fmt
     rev: "v2.5.0"
     hooks:
       - id: pyproject-fmt
-  # code formatting
   - repo: https://github.com/pycqa/flake8
     rev: 7.1.1
     hooks:

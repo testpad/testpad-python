@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Optional, Self, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 @dataclass(frozen=True)
 class Company:
-    id: str
     name: str
 
 
@@ -33,13 +32,27 @@ class Note:
 
 
 @dataclass(frozen=True)
+class Test:
+    type: str  # will always be 'test'
+    id: int
+    script_id: int
+    text: str
+    indent: int
+    tags: Optional[List[str]]
+    notes: Optional[str]
+
+
+@dataclass(frozen=True)
 class Script:
     type: str  # will always be 'script'
-    id: str
+    id: int
     name: str
     created: datetime
-    fields: str
+    fields: List[Dict[str, Any]]
     description: str = None
+    """ Scripts do not require a description, this is optional """
+    tests: List[Test] = None
+    """ Tests are only included when requesting a script detail directly, not when retrieved in lists """
 
 
 @dataclass(frozen=True)
@@ -47,24 +60,11 @@ class Folder:
     type: str  # will always be 'folder'
     id: str
     name: str
-    contents: list[Union[Self, Script, Note]]
+    contents: list[Union["Folder", Script, Note]]
 
 
 @dataclass(frozen=True)
-class Test:
+class Run:
+    type: str  # will always be 'run'
     id: int
-    text: str
-    indent: int
     script_id: int
-
-
-def parse_folder_contents(data: Dict[str, Any]) -> Union[Folder, Script, Note]:
-    if data["type"] == "script":
-        return Script(**data)
-    elif data["type"] == "note":
-        return Note(**data)
-    elif data["type"] == "folder":
-        # first coerce the contents list into correct types
-        data["contents"] = [parse_folder_contents(cont) for cont in data["contents"]]
-        return Folder(**data)
-    raise ValueError(f"Unexpected type: {data['type']}")

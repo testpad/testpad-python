@@ -42,3 +42,10 @@ class NotFound(TestpadClientException):
         self.response = response
         message = f"Entity not found at {response.url}"
         super().__init__(response, message)
+
+
+class APIServerError(TestpadClientException):
+    def __init__(self, response: Response):
+        self.response = response
+        message = "The Testpad server had an internal error"
+        super().__init__(response, message)
