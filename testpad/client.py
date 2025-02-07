@@ -12,6 +12,7 @@ from .exceptions import (
     APIServerError,
     BadRequest,
     NotFound,
+    RateLimitExceeded,
     UnexpectedResponse,
 )
 
@@ -91,6 +92,9 @@ class Testpad:
 
         if resp.status_code == HTTPStatus.NOT_FOUND:
             raise NotFound(resp)
+
+        if resp.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+            raise RateLimitExceeded(resp)
 
         if resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
             raise APIServerError(resp)

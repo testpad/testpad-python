@@ -44,6 +44,14 @@ class NotFound(TestpadClientException):
         super().__init__(response, message)
 
 
+class RateLimitExceeded(TestpadClientException):
+    def __init__(self, response: Response):
+        self.response = response
+        retry_after = response.headers.get("Retry-After", "Unknown")
+        message = f"Rate limit exceeded - retry in {retry_after} seconds"
+        super().__init__(response, message)
+
+
 class APIServerError(TestpadClientException):
     def __init__(self, response: Response):
         self.response = response
