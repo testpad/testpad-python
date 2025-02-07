@@ -201,12 +201,11 @@ class Testpad:
     def rename_folder(
         self, project_id: int, folder_id: str, name: str
     ) -> models.Folder:
-        resp = self._patch(
+        data = self._patch(
             f"projects/{project_id}/folders/{folder_id}",
             {"name": name},
         )
 
-        data = resp
         return parse_folder_contents(data["folder"])
 
     def create_folder(
