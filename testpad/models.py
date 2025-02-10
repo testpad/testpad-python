@@ -63,8 +63,41 @@ class Folder:
     contents: list[Union["Folder", Script, Note]]
 
 
+TestResult = Union[str, dict[str, str]]
+"""
+Result can either be a simple string of 'pass' or 'fail', or optionally as a dictionary of:
+
+{
+    'result': 'fail',
+    'comment': 'some explanation'
+}
+"""
+
+
 @dataclass(frozen=True)
 class Run:
     type: str  # will always be 'run'
     id: int
-    script_id: int
+
+    headers: dict[str, str]
+    """
+    Additional context for the test run, for example,
+
+     "headers": {
+        "build": "1.1.0",
+        "weather": "fair",
+    }
+    """
+
+    results: dict[str, TestResult]
+    """
+    Results are specified as a dictionary of test_id and result, for example:
+
+    "results": {
+        "1": "pass",
+        "2": {
+            "result": "fail",
+            "comment": "some explanation"
+        }
+    }
+    """

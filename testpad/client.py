@@ -104,13 +104,22 @@ class Testpad:
     def _get(self, path: str, params: Dict[str, str] = None) -> Dict[str, Any]:
         return self._request("GET", path, HTTPStatus.OK, query_params=params).json()
 
-    def _put(self, path: str, data: Dict[str, str]) -> Dict[str, Any]:
+    def _put(self, path: str, data: Dict[str, Any]) -> Dict[str, Any]:
         return self._request(
             "PUT", path, HTTPStatus.CREATED, HTTPStatus.OK, data=data
         ).json()
 
-    def _post(self, path: str, data: JsonSerializable) -> Dict[str, Any]:
-        return self._request("POST", path, HTTPStatus.OK, data=data).json()
+    def _post(
+        self, path: str, data: JsonSerializable, *, params: dict[str, str] = None
+    ) -> Dict[str, Any]:
+        return self._request(
+            "POST",
+            path,
+            HTTPStatus.OK,
+            HTTPStatus.CREATED,
+            query_params=params,
+            data=data,
+        ).json()
 
     def _patch(self, path: str, data: Dict[str, str]) -> Dict[str, Any]:
         return self._request("PATCH", path, HTTPStatus.OK, data=data).json()
@@ -268,6 +277,10 @@ class Testpad:
         data = self._put(endpoint, payload)
         return parse_folder_contents(data["script"])
 
+    def get_script(self, project_id: int, script_id: int) -> models.Script:
+        data = self._get(f"scripts/{script_id}")
+        return models.Script(**data)
+
     # ---
     # Tests (also called "cases")
     # ---
@@ -329,3 +342,43 @@ class Testpad:
 
     def delete_test(self, script_id: int, test_id: int):
         self._delete(f"scripts/{script_id}/tests/{test_id}")
+
+    # ---
+    # Runs
+    # ---
+
+    def get_run(self, script_id: int, run_id: int) -> models.Run:
+        data = self._get(f"scripts/{script_id}/runs/{run_id}")
+        return models.Run(**data["run"])
+
+    def create_run(
+        self,
+        script_id: int,
+        headers: dict[str, str] = None,
+        results: dict[str, models.TestResult] = None,
+    ) -> models.Run:
+        return self._set_run(script_id, headers, results)
+
+    def retest_run(
+        self,
+        script_id: int,
+        retest_of_id: int,
+        headers: dict[str, str] = None,
+        results: dict[str, models.TestResult] = None,
+    ) -> models.Run:
+        return self._set_run(script_id, headers, results, retest_of_id)
+
+    def _set_run(
+        self,
+        script_id: int,
+        headers: dict[str, str] = None,
+        results: dict[str, models.TestResult] = None,
+        retest_id: int = None,
+    ) -> models.Run:
+        payload = {
+            "headers": headers,
+            "results": results,
+        }
+        params = {"retest": retest_id} if retest_id is not None else None
+        data = self._post(f"scripts/{script_id}/runs", data=payload, params=params)
+        return models.Run(**data["run"])
