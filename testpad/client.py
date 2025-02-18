@@ -277,7 +277,7 @@ class Testpad:
         data = self._put(endpoint, payload)
         return parse_folder_contents(data["script"])
 
-    def get_script(self, project_id: int, script_id: int) -> models.Script:
+    def get_script(self, script_id: int) -> models.Script:
         data = self._get(f"scripts/{script_id}")
         return models.Script(**data)
 

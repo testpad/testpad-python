@@ -3,20 +3,19 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 
-@dataclass(frozen=True)
+@dataclass
 class Company:
     name: str
 
 
-@dataclass(frozen=True)
+@dataclass
 class ApiKey:
-    id: str
     number: int
     label: str = Optional[str]
     expires: Optional[datetime] = None
 
 
-@dataclass(frozen=True)
+@dataclass
 class Project:
     id: int
     name: str
@@ -24,16 +23,15 @@ class Project:
     created: datetime
 
 
-@dataclass(frozen=True)
+@dataclass
 class Note:
     type: str  # will always be 'note'
     id: str
     name: str
 
 
-@dataclass(frozen=True)
+@dataclass
 class Test:
-    type: str  # will always be 'test'
     id: int
     script_id: int
     text: str
@@ -42,7 +40,7 @@ class Test:
     notes: Optional[str]
 
 
-@dataclass(frozen=True)
+@dataclass
 class Script:
     type: str  # will always be 'script'
     id: int
@@ -54,8 +52,12 @@ class Script:
     tests: List[Test] = None
     """ Tests are only included when requesting a script detail directly, not when retrieved in lists """
 
+    def __post_init__(self):
+        if self.tests is not None:
+            self.tests = [Test(**t) for t in self.tests]
 
-@dataclass(frozen=True)
+
+@dataclass
 class Folder:
     type: str  # will always be 'folder'
     id: str
@@ -63,20 +65,18 @@ class Folder:
     contents: list[Union["Folder", Script, Note]]
 
 
-TestResult = Union[str, dict[str, str]]
-"""
-Result can either be a simple string of 'pass' or 'fail', or optionally as a dictionary of:
+@dataclass
+class TestResult:
+    result: str
+    passed: bool = None
+    comment: str = None
 
-{
-    'result': 'fail',
-    'comment': 'some explanation'
-}
-"""
+    def __post_init__(self):
+        self.passed = self.result == "pass"
 
 
-@dataclass(frozen=True)
+@dataclass
 class Run:
-    type: str  # will always be 'run'
     id: int
 
     headers: dict[str, str]
@@ -94,10 +94,12 @@ class Run:
     Results are specified as a dictionary of test_id and result, for example:
 
     "results": {
-        "1": "pass",
-        "2": {
+        "1": {
             "result": "fail",
             "comment": "some explanation"
         }
     }
     """
+
+    def __post_init__(self):
+        self.results = {key: TestResult(**value) for key, value in self.results.items()}
