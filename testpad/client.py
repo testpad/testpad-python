@@ -279,7 +279,7 @@ class Testpad:
 
     def get_script(self, script_id: int) -> models.Script:
         data = self._get(f"scripts/{script_id}")
-        return models.Script(**data)
+        return models.Script(**data["script"])
 
     # ---
     # Tests (also called "cases")

@@ -36,8 +36,9 @@ class Test:
     script_id: int
     text: str
     indent: int
-    tags: Optional[List[str]]
-    notes: Optional[str]
+    # Tags and Notes will not be present in the response if no values are set
+    tags: Optional[List[str]] = None
+    notes: Optional[str] = None
 
 
 @dataclass
