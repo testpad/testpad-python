@@ -150,7 +150,8 @@ class Testpad:
 
     def get_project(self, project_id: int) -> models.Project:
         data = self._get(f"projects/{project_id}")
-        return models.Project(**data)
+        proj = data["project"]
+        return models.Project(**proj)
 
     def list_projects(self) -> List[models.Project]:
         data = self._get("projects")
