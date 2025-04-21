@@ -47,7 +47,9 @@ class Script:
     id: int
     name: str
     created: datetime
-    fields: List[Dict[str, Any]]
+    archived: bool = False
+    fields: List[Dict[str, Any]] = None
+    """ This can be filtered out by the URL parameters """
     description: str = None
     """ Scripts do not require a description, this is optional """
     tests: List[Test] = None

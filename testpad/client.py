@@ -204,8 +204,13 @@ class Testpad:
     # Folders
     # ---
 
-    def get_folder(self, project_id: int, folder_id: str) -> models.Folder:
-        data = self._get(f"projects/{project_id}/folders/{folder_id}")
+    def get_folder(
+        self, project_id: int, folder_id: str, subfolders: bool = True
+    ) -> models.Folder:
+        url = f"projects/{project_id}/folders/{folder_id}"
+        if not subfolders:
+            url = f"{url}?subfolders=none"
+        data = self._get(url)
         return parse_folder_contents(data["folder"])
 
     def rename_folder(
