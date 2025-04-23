@@ -42,12 +42,30 @@ class Test:
 
 
 @dataclass
+class Progress:
+    total: int
+    fail: int
+    block: int
+    query: int
+    summary: str
+    passed: int = None
+    """ The data returned includes 'pass' however this is a Python keyword so it is transformed here """
+
+    @classmethod
+    def from_api(cls, data: dict):
+        return cls(passed=data.pop("pass", 0), **data)
+
+
+@dataclass
 class Script:
     type: str  # will always be 'script'
     id: int
     name: str
     created: datetime
     archived: bool = False
+    progress: Progress = None
+    """ The progress summary of this test script - optional,
+        only returned when requested using the "progress" URL parameter """
     fields: List[Dict[str, Any]] = None
     """ This can be filtered out by the URL parameters """
     description: str = None
@@ -58,6 +76,8 @@ class Script:
     def __post_init__(self):
         if self.tests is not None:
             self.tests = [Test(**t) for t in self.tests]
+        if self.progress is not None:
+            self.progress = Progress.from_api(self.progress)
 
 
 @dataclass

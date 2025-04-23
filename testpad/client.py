@@ -197,8 +197,8 @@ class Testpad:
         data = self._put(f"projects/{project_id}/notes/{note_id}", {"name": name})
         return models.Note(**data)
 
-    def delete_project_note(self, project_id: int, note_id: str):
-        self._delete(f"projects/{project_id}/notes/{note_id}")
+    # def delete_project_note(self, project_id: int, note_id: str):
+    #     self._delete(f"projects/{project_id}/notes/{note_id}")
 
     # ---
     # Folders
@@ -346,8 +346,8 @@ class Testpad:
         data = self._get(f"scripts/{script_id}/tests")
         return [models.Test(**test) for test in data["tests"]]
 
-    def delete_test(self, script_id: int, test_id: int):
-        self._delete(f"scripts/{script_id}/tests/{test_id}")
+    # def delete_test(self, script_id: int, test_id: int):
+    #     self._delete(f"scripts/{script_id}/tests/{test_id}")
 
     # ---
     # Runs
