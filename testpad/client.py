@@ -157,15 +157,17 @@ class Testpad:
         data = self._get("projects")
         return [models.Project(**proj) for proj in data["projects"]]
 
-    def get_project_contents(self, project_id: int) -> models.Folder:
+    def get_project_contents(self, project_id: int) -> list[Union[models.Folder, models.Script, models.Note]]:
         """
         :param project_id:
             The project to get the contents of
         :return:
-            The root folder of the project, and all of its contents
+            The list of contents of the project
         """
         data = self._get(f"projects/{project_id}/folders")
-        return parse_folder_contents(data["folders"])
+        if len(data['folders']) > 0:
+            return [parse_folder_contents(obj) for obj in data['folders']]
+        return []
 
     # ---
     # Project notes
