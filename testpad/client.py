@@ -11,6 +11,7 @@ from .exceptions import (
     ActionNotAllowed,
     APIServerError,
     BadRequest,
+    IncorrectMethod,
     NotFound,
     RateLimitExceeded,
     UnexpectedResponse,
@@ -93,6 +94,9 @@ class Testpad:
         if resp.status_code == HTTPStatus.NOT_FOUND:
             raise NotFound(resp)
 
+        if resp.status_code == HTTPStatus.METHOD_NOT_ALLOWED:
+            raise IncorrectMethod(resp)
+
         if resp.status_code == HTTPStatus.TOO_MANY_REQUESTS:
             raise RateLimitExceeded(resp)
 
@@ -157,7 +161,9 @@ class Testpad:
         data = self._get("projects")
         return [models.Project(**proj) for proj in data["projects"]]
 
-    def get_project_contents(self, project_id: int) -> list[Union[models.Folder, models.Script, models.Note]]:
+    def get_project_contents(
+        self, project_id: int
+    ) -> list[Union[models.Folder, models.Script, models.Note]]:
         """
         :param project_id:
             The project to get the contents of
@@ -165,8 +171,8 @@ class Testpad:
             The list of contents of the project
         """
         data = self._get(f"projects/{project_id}/folders")
-        if len(data['folders']) > 0:
-            return [parse_folder_contents(obj) for obj in data['folders']]
+        if len(data["folders"]) > 0:
+            return [parse_folder_contents(obj) for obj in data["folders"]]
         return []
 
     # ---
@@ -178,7 +184,7 @@ class Testpad:
         return [models.Note(**note) for note in data["notes"]]
 
     def add_project_note(self, project_id: int, name: str) -> models.Note:
-        data = self._put(f"projects/{project_id}/notes", {"name": name})
+        data = self._post(f"projects/{project_id}/notes", {"name": name})
         return models.Note(**data)
 
     def update_project_note(
@@ -196,7 +202,7 @@ class Testpad:
         :return:
             An updated Note object with the new contents
         """
-        data = self._put(f"projects/{project_id}/notes/{note_id}", {"name": name})
+        data = self._patch(f"projects/{project_id}/notes/{note_id}", {"name": name})
         return models.Note(**data)
 
     # def delete_project_note(self, project_id: int, note_id: str):
@@ -247,7 +253,7 @@ class Testpad:
         endpoint = f"projects/{project_id}/folders"
         if in_folder is not None:
             endpoint = f"{endpoint}/{in_folder}/folders"
-        data = self._put(endpoint, data={"name": name, "insert": insert})
+        data = self._post(endpoint, data={"name": name, "insert": insert})
         return parse_folder_contents(data["folder"])
 
     # ---
@@ -282,7 +288,7 @@ class Testpad:
 
         payload = {"name": name}
 
-        data = self._put(endpoint, payload)
+        data = self._post(endpoint, payload)
         return parse_folder_contents(data["script"])
 
     def get_script(self, script_id: int) -> models.Script:
@@ -341,7 +347,7 @@ class Testpad:
         indent: int = None,
     ) -> models.Test:
         new_data = {"text": test_text, "indent": indent, "tags": tags, "notes": notes}
-        data = self._put(f"scripts/{script_id}/tests/{test_id}", data=new_data)
+        data = self._patch(f"scripts/{script_id}/tests/{test_id}", data=new_data)
         return models.Test(**data["test"])
 
     def list_tests(self, script_id: int) -> List[models.Test]:

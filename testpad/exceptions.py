@@ -36,6 +36,16 @@ class BadRequest(TestpadClientException):
         super().__init__(response, message)
 
 
+class IncorrectMethod(TestpadClientException):
+    """
+    Raised if an incorrect HTTP method is used for an endpoint (eg, PUT instead of POST)
+    """
+
+    def __init__(self, response: Response):
+        message = response.json().get("detail", "Unknown")
+        super().__init__(response, message)
+
+
 class NotFound(TestpadClientException):
 
     def __init__(self, response: Response):
