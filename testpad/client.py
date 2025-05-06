@@ -292,6 +292,7 @@ class Testpad:
         name: str,
         *,
         description: str = None,
+        comments: str = None,
         in_folder: str = None,
         tests: List[models.Test] = None,
     ) -> models.Script:
@@ -303,6 +304,8 @@ class Testpad:
             required: The name of the script to create
         :param description:
             optional: A description of the script
+        :param comments:
+            optional: Comments on the script, if any
         :param in_folder:
             optional: The folder to create the script in. If omitted, the script will be
             placed in the root of the project
@@ -318,6 +321,8 @@ class Testpad:
         payload = {"name": name}
         if description is not None:
             payload["description"] = description
+        if comments is not None:
+            payload["comments"] = comments
 
         data = self._post(endpoint, payload)
         return parse_folder_contents(data["script"])
@@ -327,15 +332,27 @@ class Testpad:
         return models.Script(**data["script"])
 
     def update_script(
-        self, script_id: int, *, name: str = None, description: str = None
+        self,
+        script_id: int,
+        *,
+        name: str = None,
+        description: str = None,
+        comments: str = None,
     ) -> models.Script:
-        if name is None and description is None:
-            raise ValueError("Must provide at least one of name or description")
         payload = {}
+
         if name is not None:
             payload["name"] = name
         if description is not None:
             payload["description"] = description
+        if comments is not None:
+            payload["comments"] = comments
+
+        if not payload:
+            raise ValueError(
+                "Must provide at least one of name, description or comments"
+            )
+
         data = self._patch(f"scripts/{script_id}", payload)
         return models.Script(**data["script"])
 
