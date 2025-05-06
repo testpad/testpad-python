@@ -257,6 +257,30 @@ class Testpad:
         return parse_folder_contents(data["folder"])
 
     # ---
+    # Folder notes
+    # ---
+
+    def list_folder_notes(self, project_id: int, folder_id: str) -> List[models.Note]:
+        data = self._get(f"projects/{project_id}/folders/{folder_id}/notes")
+        return [models.Note(**note) for note in data["notes"]]
+
+    def add_folder_note(
+        self, project_id: int, folder_id: str, name: str
+    ) -> models.Note:
+        data = self._post(
+            f"projects/{project_id}/folders/{folder_id}/notes", {"name": name}
+        )
+        return models.Note(**data)
+
+    def update_folder_note(
+        self, project_id: int, folder_id: str, note_id: str, name: str
+    ) -> models.Note:
+        data = self._patch(
+            f"projects/{project_id}/folders/{folder_id}/notes/{note_id}", {"name": name}
+        )
+        return models.Note(**data)
+
+    # ---
     # Scripts
     # ---
 
