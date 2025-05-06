@@ -1,4 +1,4 @@
-from http import HTTPStatus
+from http import HTTPMethod, HTTPStatus
 from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urljoin
 
@@ -106,18 +106,20 @@ class Testpad:
         raise UnexpectedResponse(resp)
 
     def _get(self, path: str, params: Dict[str, str] = None) -> Dict[str, Any]:
-        return self._request("GET", path, HTTPStatus.OK, query_params=params).json()
+        return self._request(
+            HTTPMethod.GET, path, HTTPStatus.OK, query_params=params
+        ).json()
 
     def _put(self, path: str, data: Dict[str, Any]) -> Dict[str, Any]:
         return self._request(
-            "PUT", path, HTTPStatus.CREATED, HTTPStatus.OK, data=data
+            HTTPMethod.PUT, path, HTTPStatus.CREATED, HTTPStatus.OK, data=data
         ).json()
 
     def _post(
         self, path: str, data: JsonSerializable, *, params: dict[str, str] = None
     ) -> Dict[str, Any]:
         return self._request(
-            "POST",
+            HTTPMethod.POST,
             path,
             HTTPStatus.OK,
             HTTPStatus.CREATED,
@@ -126,10 +128,10 @@ class Testpad:
         ).json()
 
     def _patch(self, path: str, data: Dict[str, str]) -> Dict[str, Any]:
-        return self._request("PATCH", path, HTTPStatus.OK, data=data).json()
+        return self._request(HTTPMethod.PATCH, path, HTTPStatus.OK, data=data).json()
 
     def _delete(self, path: str) -> Response:
-        return self._request("DELETE", path, HTTPStatus.NO_CONTENT)
+        return self._request(HTTPMethod.DELETE, path, HTTPStatus.NO_CONTENT)
 
     # ---
     # Utilities
@@ -289,6 +291,7 @@ class Testpad:
         project_id: int,
         name: str,
         *,
+        description: str = None,
         in_folder: str = None,
         tests: List[models.Test] = None,
     ) -> models.Script:
@@ -298,6 +301,8 @@ class Testpad:
             required: The project in which to create this script
         :param name:
             required: The name of the script to create
+        :param description:
+            optional: A description of the script
         :param in_folder:
             optional: The folder to create the script in. If omitted, the script will be
             placed in the root of the project
@@ -311,12 +316,27 @@ class Testpad:
             endpoint = f"projects/{project_id}/folders/{in_folder}/scripts"
 
         payload = {"name": name}
+        if description is not None:
+            payload["description"] = description
 
         data = self._post(endpoint, payload)
         return parse_folder_contents(data["script"])
 
     def get_script(self, script_id: int) -> models.Script:
         data = self._get(f"scripts/{script_id}")
+        return models.Script(**data["script"])
+
+    def update_script(
+        self, script_id: int, *, name: str = None, description: str = None
+    ) -> models.Script:
+        if name is None and description is None:
+            raise ValueError("Must provide at least one of name or description")
+        payload = {}
+        if name is not None:
+            payload["name"] = name
+        if description is not None:
+            payload["description"] = description
+        data = self._patch(f"scripts/{script_id}", payload)
         return models.Script(**data["script"])
 
     # ---
