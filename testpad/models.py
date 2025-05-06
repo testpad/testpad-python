@@ -70,6 +70,8 @@ class Script:
     """ This can be filtered out by the URL parameters """
     description: str = None
     """ Scripts do not require a description, this is optional """
+    comments: str = None
+    """ Scripts do not require report comments, this is optional """
     tests: List[Test] = None
     """ Tests are only included when requesting a script detail directly, not when retrieved in lists """
 
