@@ -1,4 +1,4 @@
-from http import HTTPMethod, HTTPStatus
+from http import HTTPStatus
 from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urljoin
 
@@ -76,10 +76,11 @@ class Testpad:
         *accepted_responses: HTTPStatus,
         data: Optional[JsonSerializable] = None,
         query_params: Optional[Dict[str, str]] = None,
+        **session_kwargs,
     ) -> Response:
         url = urljoin(self._base_url, path)
         resp = self._session.request(
-            str(method), url, params=query_params, json=data, allow_redirects=True
+            str(method), url, params=query_params, json=data, **session_kwargs
         )
 
         if resp.status_code in accepted_responses:
@@ -106,20 +107,18 @@ class Testpad:
         raise UnexpectedResponse(resp)
 
     def _get(self, path: str, params: Dict[str, str] = None) -> Dict[str, Any]:
-        return self._request(
-            HTTPMethod.GET, path, HTTPStatus.OK, query_params=params
-        ).json()
+        return self._request("GET", path, HTTPStatus.OK, query_params=params).json()
 
     def _put(self, path: str, data: Dict[str, Any]) -> Dict[str, Any]:
         return self._request(
-            HTTPMethod.PUT, path, HTTPStatus.CREATED, HTTPStatus.OK, data=data
+            "PUT", path, HTTPStatus.CREATED, HTTPStatus.OK, data=data
         ).json()
 
     def _post(
         self, path: str, data: JsonSerializable, *, params: dict[str, str] = None
     ) -> Dict[str, Any]:
         return self._request(
-            HTTPMethod.POST,
+            "POST",
             path,
             HTTPStatus.OK,
             HTTPStatus.CREATED,
@@ -128,10 +127,10 @@ class Testpad:
         ).json()
 
     def _patch(self, path: str, data: Dict[str, str]) -> Dict[str, Any]:
-        return self._request(HTTPMethod.PATCH, path, HTTPStatus.OK, data=data).json()
+        return self._request("PATCH", path, HTTPStatus.OK, data=data).json()
 
     def _delete(self, path: str) -> Response:
-        return self._request(HTTPMethod.DELETE, path, HTTPStatus.NO_CONTENT)
+        return self._request("DELETE", path, HTTPStatus.NO_CONTENT)
 
     # ---
     # Utilities
