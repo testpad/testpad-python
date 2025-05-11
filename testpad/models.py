@@ -95,6 +95,7 @@ class TestResult:
     result: str
     passed: bool = None
     comment: str = None
+    issue: str = None
 
     def __post_init__(self):
         self.passed = self.result == "pass"
