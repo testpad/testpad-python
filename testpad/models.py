@@ -41,6 +41,46 @@ class Test:
     notes: Optional[str] = None
 
 
+
+@dataclass
+class TestResult:
+    result: str
+    passed: bool = None
+    comment: str = None
+    issue: str = None
+
+    def __post_init__(self):
+        self.passed = self.result == "pass"
+
+@dataclass
+class Run:
+    id: int
+
+    headers: dict[str, str]
+    """
+    Additional context for the test run, for example,
+
+     "headers": {
+        "build": "1.1.0",
+        "weather": "fair",
+    }
+    """
+
+    results: dict[str, TestResult]
+    """
+    Results are specified as a dictionary of test_id and result, for example:
+
+    "results": {
+        "1": {
+            "result": "fail",
+            "comment": "some explanation"
+        }
+    }
+    """
+
+    def __post_init__(self):
+        self.results = {key: TestResult(**value) for key, value in self.results.items()}
+
 @dataclass
 class Progress:
     total: int
@@ -73,11 +113,15 @@ class Script:
     comments: str = None
     """ Scripts do not require report comments, this is optional """
     tests: List[Test] = None
-    """ Tests are only included when requesting a script detail directly, not when retrieved in lists """
+    """ Tests are included in script endpoints by default, and folder endpoints when requested """
+    runs: List[Run] = None
+    """ Runs are included in script endpoints by default, and folder endpoints when requested """
 
     def __post_init__(self):
         if self.tests is not None:
             self.tests = [Test(**t) for t in self.tests]
+        if self.runs is not None:
+            self.runs = [Run(**r) for r in self.runs]
         if self.progress is not None:
             self.progress = Progress.from_api(self.progress)
 
@@ -89,43 +133,3 @@ class Folder:
     name: str
     contents: list[Union["Folder", Script, Note]]
 
-
-@dataclass
-class TestResult:
-    result: str
-    passed: bool = None
-    comment: str = None
-    issue: str = None
-
-    def __post_init__(self):
-        self.passed = self.result == "pass"
-
-
-@dataclass
-class Run:
-    id: int
-
-    headers: dict[str, str]
-    """
-    Additional context for the test run, for example,
-
-     "headers": {
-        "build": "1.1.0",
-        "weather": "fair",
-    }
-    """
-
-    results: dict[str, TestResult]
-    """
-    Results are specified as a dictionary of test_id and result, for example:
-
-    "results": {
-        "1": {
-            "result": "fail",
-            "comment": "some explanation"
-        }
-    }
-    """
-
-    def __post_init__(self):
-        self.results = {key: TestResult(**value) for key, value in self.results.items()}
