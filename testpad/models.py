@@ -33,13 +33,13 @@ class Note:
 @dataclass
 class Test:
     id: int
-    script_id: int
     text: str
     indent: int
     # Tags and Notes will not be present in the response if no values are set
     tags: Optional[List[str]] = None
     notes: Optional[str] = None
-
+    # Script ID is not returned from some endpoints
+    script_id: int = None
 
 
 @dataclass
@@ -51,6 +51,22 @@ class TestResult:
 
     def __post_init__(self):
         self.passed = self.result == "pass"
+
+
+@dataclass
+class Progress:
+    total: int
+    fail: int
+    block: int
+    query: int
+    summary: str
+    passed: int = None
+    """ The data returned includes 'pass' however this is a Python keyword so it is transformed here """
+
+    @classmethod
+    def from_api(cls, data: dict):
+        return cls(passed=data.pop("pass", 0), **data)
+
 
 @dataclass
 class Run:
@@ -77,23 +93,15 @@ class Run:
         }
     }
     """
+    # these value are optional:
+    progress: Progress = None
+    created: str = None
+    state: str = None
+    label: str = None
+    assignee: str = None
 
     def __post_init__(self):
         self.results = {key: TestResult(**value) for key, value in self.results.items()}
-
-@dataclass
-class Progress:
-    total: int
-    fail: int
-    block: int
-    query: int
-    summary: str
-    passed: int = None
-    """ The data returned includes 'pass' however this is a Python keyword so it is transformed here """
-
-    @classmethod
-    def from_api(cls, data: dict):
-        return cls(passed=data.pop("pass", 0), **data)
 
 
 @dataclass
@@ -132,4 +140,3 @@ class Folder:
     id: str
     name: str
     contents: list[Union["Folder", Script, Note]]
-
